@@ -21,6 +21,7 @@
 #include <ADXRS450_Gyro.h>
 #include <SPI.h>
 #include <DigitalInput.h>
+#include <CameraServer.h>
 
 using namespace std;
 using namespace frc;
@@ -30,20 +31,28 @@ double g_Angle;
 class Robot : public IterativeRobot {
 public:
 
-	void ShootBall() {
-		clawL.Set(-1);
-		clawR.Set(1);
+	int oof() {
+		cout << "die" << endl;
+		return 1;
+	}
+
+	void Zero() {
+		RobotDrive.ArcadeDrive(0,0);
+	}
+	void ShootBall(double speed) {
+		clawL.Set(-speed);
+		clawR.Set(speed);
 		Wait(0.2);
 		clawL.Set(0);
 		clawR.Set(0);
 	}
 
 	void DropClaw() {
-		RobotDrive.ArcadeDrive(1,0);
-		Wait(0.25);
-		RobotDrive.ArcadeDrive(-1,0);
-		Wait(0.25);
-		RobotDrive.ArcadeDrive(0,0);
+		clawY.Set(1);
+		Wait(1.5);
+		clawY.Set(-1);
+		Wait(1.5);
+		clawY.Set(0);
 	}
 
 	void CrossLine() {
@@ -53,6 +62,14 @@ public:
 		RobotDrive.ArcadeDrive(0,0);
 
 	}
+
+    static void VisionThread()
+    {
+        cs::UsbCamera camera = CameraServer::GetInstance()->StartAutomaticCapture();
+        camera.SetResolution(640, 480);
+        cs::CvSink cvSink = CameraServer::GetInstance()->GetVideo();
+        cs::CvSource outputStreamStd = CameraServer::GetInstance()->PutVideo("Gray", 640, 480);
+    }
 
 	void RobotInit() {
 
@@ -66,11 +83,12 @@ public:
 
 		SmartDashboard::PutData("Auto Modes", &c_Mode);
 		SmartDashboard::PutData("Priority", &c_Prioritize);
-		SmartDashboard::PutData("Gyro Angle", &g_Angle);
 
 		gyro.Calibrate();
+		/*std::thread visionThread(VisionThread);
+		visionThread.detach(); */
 		gyro.Reset();
-		d_setLeft.SetInverted(true);
+		d_setLeft.SetInverted(false);
 	}
 
 	/*
@@ -89,11 +107,10 @@ public:
 	 */
 	void AutonomousInit() override {
 		string autoSelected = c_Mode.GetSelected();
+		string prioritizeSelected = c_Prioritize.GetSelected();
 		// string autoSelected = SmartDashboard::GetString(
 		// "Auto Selector", kAutoNameDefault);
 		cout << "Auto selected: " << autoSelected << endl;
-
-		string prioritizeSelected = c_Prioritize.GetSelected();
 		cout << "Prioritize: " << prioritizeSelected << endl;
 
 		// MotorSafety improves safety when motors are updated in loops
@@ -102,10 +119,8 @@ public:
 		RobotDrive.SetSafetyEnabled(false);
 
 		string gameData = DriverStation::GetInstance().GetGameSpecificMessage();
-
 //The block below is for assigning priorities to a numerical value...
 		int priorityInt;
-
 		if(prioritizeSelected == DoSwitch){
 			priorityInt = 0;
 		}
@@ -114,6 +129,8 @@ public:
 		}
 		else if(prioritizeSelected == CrossLineOnly){
 			priorityInt = 2;
+		} else {
+			cout << "No Priority Detected." << endl;
 		}
 //END BLOCK
 
@@ -122,9 +139,13 @@ public:
 		int switchSideInt;
 		if(gameData[0] == 'L'){
 			switchSideInt = 0;
+			cout << "Switch on Left" << endl;
 		}
 		else if(gameData[0] == 'R'){
 			switchSideInt = 1;
+			cout << "Switch on Right" << endl;
+		} else {
+			cout << "No SwitchSide Detected." << endl;
 		}
 
 		//Scale
@@ -134,45 +155,78 @@ public:
 		}
 		else if(gameData[1] == 'R'){
 			scaleSideInt = 1;
+		} else {
+			cout << "No ScaleSide Detected." << endl;
 		}
 //END BLOCK
+		//Dropping Claw
+/*		clawY.Set(1);
+		Wait(0.5);
+		clawY.Set(0);
+		Wait(0.05);
+		clawY.Set(-1);
+		Wait(0.45);
+		clawY.Set(0); */
 
+		gyro.Reset();
 		if (autoSelected == autoOnCenter) {
-			// Custom Auto goes here
 			cout << "Running Center Auton..." << endl;
 
 			switch (switchSideInt){
 			case 0/*Left*/:
-				//In front of the center station and going to left side of switch.
-				DropClaw();
-				RobotDrive.ArcadeDrive(0.5,0);
-				Wait(0.5);
-				do {
-					RobotDrive.ArcadeDrive(0,0.5);
-				} while(gyro.GetAngle() > -45);
-				do {
-					RobotDrive.ArcadeDrive(0.5,-0.25);
-				} while(gyro.GetAngle() > 0);
+				cout << "Going for Left Switch" << endl;
 
-								break;
+				RobotDrive.ArcadeDrive(0.75,0);
+				Wait(0.75);
+				Zero();
+				Wait(0.1);
 
+				RobotDrive.ArcadeDrive(0, -0.8);
+				Wait(0.85);
+				Zero();
+				Wait(0.1);
+
+				RobotDrive.ArcadeDrive(0.75,0);
+				Wait(1.75);
+				Zero();
+				Wait(0.1);
+
+				RobotDrive.ArcadeDrive(0, 0.8);
+				Wait(0.7);
+				Zero();
+				Wait(0.1);
+
+				clawY.Set(0.75);
+				Wait(1.3);
+				clawY.Set(0);
+
+				RobotDrive.ArcadeDrive(0.75, 0);
+				Wait(0.75);
+				Zero();
+				Wait(0.25);
+
+				ShootBall(0.3);
+				Wait(0.25);
+
+				clawY.Set(-0.1);
+				Wait(0.15);
+				clawY.Set(0);
 				break;
 			case 1/*Right*/:
 				//In front of the center station and going to right side of switch.
-				DropClaw();
-				RobotDrive.ArcadeDrive(0.5,0);
-				Wait(0.5);
-				do {
-					RobotDrive.ArcadeDrive(0,0.5);
-				} while(gyro.GetAngle() < 45);
-				do {
-				RobotDrive.ArcadeDrive(0.5,-0.25);
-				} while(gyro.GetAngle() > 0);
+				cout << "Going for Right Switch" << endl;
 
+				clawY.Set(0.75);
+				Wait(1);
+				clawY.Set(0);
+				RobotDrive.ArcadeDrive(0.75,0.1);
+				Wait(1.5);
+				Zero();
+				ShootBall(0.25);
 				break;
 			default/*NO CODE ERROR*/:
 				cout << "NO CODE GIVEN... DRIVING PAST AUTO LINE" << endl;
-				RobotDrive.ArcadeDrive(0.5, -gyro.GetAngle()*0.003);
+				RobotDrive.ArcadeDrive(1, -gyro.GetAngle()*0.003);
 
 				break;
 			}
@@ -204,7 +258,7 @@ public:
 						Wait(0.3);
 						clawY.Set(0.75);
 						Wait(0.3);
-						ShootBall();
+						ShootBall(0.25);
 						break;
 					default :
 						CrossLine();
@@ -255,7 +309,7 @@ public:
 				case 1 :
 					//Switch is on right, doing switch
 					DropClaw();
-					RobotDrive.ArcadeDrive(0.75,-gyro.GetAngle()*0.003);
+					RobotDrive.ArcadeDrive(0.5,-gyro.GetAngle()*0.003);
 					do {
 						RobotDrive.ArcadeDrive(0,-0.33);
 					} while (gyro.GetAngle() > -85);
@@ -286,7 +340,9 @@ public:
 				case 1 :
 					switch(switchSideInt){
 					case 0 :
-						//Do switch
+						//Switch is on left, doing switch
+						DropClaw();
+
 						break;
 					default :
 						CrossLine();
@@ -328,6 +384,8 @@ public:
 
 	void AutonomousPeriodic() {
 		g_Angle = gyro.GetAngle();
+		cout << g_Angle << endl;
+		Wait(0.3);
 	}
 
 	void TeleopInit() {
@@ -384,7 +442,6 @@ public:
 
 	void TeleopPeriodic() {
 		g_Angle = gyro.GetAngle();
-		SmartDashboard::PutData(g_Angle, g_Angle);
 	}
 
 	void TestPeriodic() {}
@@ -421,6 +478,9 @@ private:
 	//Gyro
 	ADXRS450_Gyro gyro{SPI::Port::kOnboardCS0};
 
+	//Servo
+	Servo servo{7};
+
 	//Limit Switches
 	DigitalInput limit0{0};
 	DigitalInput limit1{1};
@@ -439,7 +499,6 @@ private:
 	const string autoOnRight = "StartInRight";
 	const string autoOnCenter = "StartInCenter";
 
-	SendableData<double> g_Angle;
 };
 
 START_ROBOT_CLASS(Robot)
