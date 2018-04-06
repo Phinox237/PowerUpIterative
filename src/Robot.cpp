@@ -31,36 +31,122 @@ double g_Angle;
 class Robot : public IterativeRobot {
 public:
 
-	int oof() {
-		cout << "die" << endl;
-		return 1;
-	}
-
 	void Zero() {
 		RobotDrive.ArcadeDrive(0,0);
 	}
+
 	void ShootBall(double speed) {
 		clawL.Set(-speed);
 		clawR.Set(speed);
-		Wait(0.2);
+		Wait(0.5);
 		clawL.Set(0);
 		clawR.Set(0);
 	}
 
 	void DropClaw() {
-		clawY.Set(1);
-		Wait(1.5);
-		clawY.Set(-1);
-		Wait(1.5);
+		clawY.Set(0.85);
+		Wait(1.3);
+		clawY.Set(0);
+		clawY.Set(-0.1);
+		Wait(0.15);
 		clawY.Set(0);
 	}
 
 	void CrossLine() {
-		DropClaw();
-		RobotDrive.ArcadeDrive(0.75,-gyro.GetAngle()*0.003);
+		RobotDrive.ArcadeDrive(0.75,0.1);
 		Wait (2);
-		RobotDrive.ArcadeDrive(0,0);
+		Zero();
 
+	}
+	void ToScaleL() {
+		RobotDrive.ArcadeDrive(0.75, 0.15);
+		Wait(1.9);
+		Zero();
+		clawY.Set(0.85);
+		Wait(3.8);
+		clawY.Set(0);
+	}
+	void DoScaleL() {
+		CrossLine();
+		ToScaleL();
+		RobotDrive.ArcadeDrive(0, 0.8);
+		Wait(0.9);
+		Zero();
+		RobotDrive.ArcadeDrive(0.6, 0);
+		Wait(1.3);
+		Zero();
+		ShootBall(0.3);
+		Wait(0.3);
+		RobotDrive.ArcadeDrive(-0.75, 0);
+		Wait(0.3);
+		Zero();
+	}
+	void DoSwitchL() {
+		RobotDrive.ArcadeDrive(0.75,0.1);
+		Wait (2.25);
+		RobotDrive.ArcadeDrive(0,0);
+		Wait(0.1);
+
+		RobotDrive.ArcadeDrive(0, 0.75);
+		Wait(1.5);
+		Zero();
+		Wait(0.1);
+
+		clawY.Set(0.85);
+		Wait(1.4);
+		clawY.Set(0);
+		Wait(0.1);
+
+		RobotDrive.ArcadeDrive(0.65, 0);
+		Wait(0.4);
+		Zero();
+
+		ShootBall(0.4);
+	}
+	void ToScaleR() {
+		RobotDrive.ArcadeDrive(0.75, 0.15);
+		Wait(1.9);
+		Zero();
+		clawY.Set(0.85);
+		Wait(3.8);
+		clawY.Set(0);
+	}
+	void DoScaleR() {
+		CrossLine();
+		ToScaleR();
+		RobotDrive.ArcadeDrive(0, -0.8);
+		Wait(0.9);
+		Zero();
+		RobotDrive.ArcadeDrive(0.6, 0);
+		Wait(1.3);
+		Zero();
+		ShootBall(0.3);
+		Wait(0.3);
+		RobotDrive.ArcadeDrive(-0.75, 0);
+		Wait(0.3);
+		Zero();
+	}
+	void DoSwitchR() {
+		RobotDrive.ArcadeDrive(0.75,0.1);
+		Wait (2.25);
+		RobotDrive.ArcadeDrive(0,0);
+		Wait(0.1);
+
+		RobotDrive.ArcadeDrive(0, -0.75);
+		Wait(1.5);
+		Zero();
+		Wait(0.1);
+
+		clawY.Set(0.85);
+		Wait(1.4);
+		clawY.Set(0);
+		Wait(0.1);
+
+		RobotDrive.ArcadeDrive(0.65, 0);
+		Wait(0.4);
+		Zero();
+
+		ShootBall(0.4);
 	}
 
     static void VisionThread()
@@ -80,6 +166,7 @@ public:
 		c_Prioritize.AddDefault(DoSwitch, DoSwitch);
 		c_Prioritize.AddObject(DoScale, DoScale);
 		c_Prioritize.AddObject(CrossLineOnly, CrossLineOnly);
+
 
 		SmartDashboard::PutData("Auto Modes", &c_Mode);
 		SmartDashboard::PutData("Priority", &c_Prioritize);
@@ -116,6 +203,8 @@ public:
 		// MotorSafety improves safety when motors are updated in loops
 		// but is disabled here because motor updates are not looped in
 		// this autonomous mode.
+		d_setLeft.SetInverted(false);
+		clawL.SetInverted(true);
 		RobotDrive.SetSafetyEnabled(false);
 
 		string gameData = DriverStation::GetInstance().GetGameSpecificMessage();
@@ -171,211 +260,156 @@ public:
 		gyro.Reset();
 		if (autoSelected == autoOnCenter) {
 			cout << "Running Center Auton..." << endl;
+			switch(priorityInt){
+			case 0:
+				switch (switchSideInt){
+				case 0:
+					cout << "Going for Left Switch" << endl;
 
-			switch (switchSideInt){
-			case 0/*Left*/:
-				cout << "Going for Left Switch" << endl;
+					RobotDrive.ArcadeDrive(0.75,0);
+					Wait(0.75);
+					Zero();
+					Wait(0.1);
 
-				RobotDrive.ArcadeDrive(0.75,0);
-				Wait(0.75);
-				Zero();
-				Wait(0.1);
+					RobotDrive.ArcadeDrive(0, -0.8);
+					Wait(0.85);
+					Zero();
+					Wait(0.1);
 
-				RobotDrive.ArcadeDrive(0, -0.8);
-				Wait(0.85);
-				Zero();
-				Wait(0.1);
+					RobotDrive.ArcadeDrive(0.75,0);
+					Wait(1.75);
+					Zero();
+					Wait(0.1);
 
-				RobotDrive.ArcadeDrive(0.75,0);
-				Wait(1.75);
-				Zero();
-				Wait(0.1);
+					RobotDrive.ArcadeDrive(0, 0.8);
+					Wait(0.7);
+					Zero();
+					Wait(0.1);
 
-				RobotDrive.ArcadeDrive(0, 0.8);
-				Wait(0.7);
-				Zero();
-				Wait(0.1);
+					clawY.Set(0.85);
+					Wait(1.3);
+					clawY.Set(0);
 
-				clawY.Set(0.75);
-				Wait(1.3);
-				clawY.Set(0);
+					RobotDrive.ArcadeDrive(0.75, 0);
+					Wait(1);
+					Zero();
+					Wait(0.25);
 
-				RobotDrive.ArcadeDrive(0.75, 0);
-				Wait(0.75);
-				Zero();
-				Wait(0.25);
+					ShootBall(0.4);
+					Wait(0.25);
 
-				ShootBall(0.3);
-				Wait(0.25);
+					clawY.Set(-0.1);
+					Wait(0.15);
+					clawY.Set(0);
+					break;
 
-				clawY.Set(-0.1);
-				Wait(0.15);
-				clawY.Set(0);
+				case 1/*Right*/:
+					//In front of the center station and going to right side of switch.
+					cout << "Going for Right Switch" << endl;
+
+					clawY.Set(0.85);
+					Wait(1.4);
+					clawY.Set(0);
+					Wait(0.1);
+					RobotDrive.ArcadeDrive(0.75,0.2);
+					Wait(2);
+					Zero();
+					ShootBall(0.5);
+					break;
+
+				default: //NO CODE ERROR
+					cout << "No DS Data, Crossing Line" << endl;
+					CrossLine();
+					break;
+				}
 				break;
-			case 1/*Right*/:
-				//In front of the center station and going to right side of switch.
-				cout << "Going for Right Switch" << endl;
 
-				clawY.Set(0.75);
-				Wait(1);
-				clawY.Set(0);
-				RobotDrive.ArcadeDrive(0.75,0.1);
-				Wait(1.5);
-				Zero();
-				ShootBall(0.25);
-				break;
-			default/*NO CODE ERROR*/:
-				cout << "NO CODE GIVEN... DRIVING PAST AUTO LINE" << endl;
-				RobotDrive.ArcadeDrive(1, -gyro.GetAngle()*0.003);
-
-				break;
+				default:
+					CrossLine();
+					break;
 			}
-
-
 		}
+
 		else if (autoSelected == autoOnRight) {
 			cout << "Running Right Auton..." << endl;
 
 			gyro.Reset();
 
 			switch(priorityInt) {
-
-			case 1 :
-				//Prioritize scale
-				switch(scaleSideInt) {
-				case 0 :
-					//Scale is on left, checking switch...
+				case 0:
 					switch(switchSideInt) {
+					case 0:
+						switch(scaleSideInt) {
+						case 0:
+							CrossLine();
+							break;
+						case 1:
+							DoScaleR();
+							break;
+						default:
+							CrossLine();
+							break;
+						}
+						break;
 					case 1 :
-						//Do switch
-						DropClaw();
-						RobotDrive.ArcadeDrive(-1, -gyro.GetAngle()*0.003);
-						Wait(0.8);
-						do {
-						RobotDrive.ArcadeDrive(0, -0.33);
-						} while (gyro.GetAngle() < 85);
-						RobotDrive.ArcadeDrive(0.5, -gyro.GetAngle()*0.003);
-						Wait(0.3);
-						clawY.Set(0.75);
-						Wait(0.3);
-						ShootBall(0.25);
+						DoSwitchR();
 						break;
-					default :
-						CrossLine();
-						break;
-
 					}
 					break;
-				case 1 :
-					//Scale is on right, doing scale...
-					DropClaw();
-					RobotDrive.ArcadeDrive(0.75, -gyro.GetAngle()*0.003);
-					Wait(2);
-					do {
-						RobotDrive.ArcadeDrive(0, 0.33);
-					} while (gyro.GetAngle() > 1);
-					RobotDrive.ArcadeDrive(0,0);
-					clawY.Set(0.7);
-					Wait(1.3);
-					clawY.Set(0);
+				default:
+					CrossLine();
 					break;
-
-				}
-				break;
-
-			case 0 :
-				//Prioritize switch
-				switch(switchSideInt) {
-				case 0 :
-					//Switch is on left, checking scale...
-					switch(scaleSideInt) {
-					case 1 :
-						//Scale is on right, doing scale
-						DropClaw();
-						RobotDrive.ArcadeDrive(0.75,-gyro.GetAngle()*0.003);
-						Wait(1);
-						do {
-						RobotDrive.ArcadeDrive(0,-0.33);
-						} while (gyro.GetAngle() > -85);
-						break;
-
-					default :
-						CrossLine();
-						break;
-
-					}
-					break;
-
-				case 1 :
-					//Switch is on right, doing switch
-					DropClaw();
-					RobotDrive.ArcadeDrive(0.5,-gyro.GetAngle()*0.003);
-					do {
-						RobotDrive.ArcadeDrive(0,-0.33);
-					} while (gyro.GetAngle() > -85);
-
-					break;
-				}
-				break;
-
-			case 2 :
-				CrossLine();
-				break;
-
 			}
-
 		}
+
 		else if (autoSelected == autoOnLeft) {
 			cout << "Running Left Auton..." << endl;
 
-			gyro.Reset();
-
-			switch(priorityInt){
-
-			case 1 :
-				switch(scaleSideInt){
-				case 0 :
-					//Do scale
+			switch(priorityInt) {
+			case 0:
+				switch(switchSideInt) {
+				case 0:
+					DoSwitchL();
 					break;
-				case 1 :
-					switch(switchSideInt){
-					case 0 :
-						//Switch is on left, doing switch
-						DropClaw();
-
+				case 1:
+					switch(scaleSideInt) {
+					case 0:
+						DoScaleL();
 						break;
-					default :
+					case 1:
+						CrossLine();
+						break;
+					}
+					break;
+				default:
+					CrossLine();
+					break;
+				}
+			break;
+			case 1:
+				switch (scaleSideInt) {
+				case 0:
+					DoScaleL();
+					break;
+				case 1:
+					switch (switchSideInt) {
+					case 0:
+						DoSwitchL();
+						break;
+					case 1:
 						CrossLine();
 						break;
 					}
 					break;
 				}
 				break;
-			case 0 :
-				switch(switchSideInt){
-				case 0 :
-						//Do switch
-						break;
-				case 1 :
-					switch(scaleSideInt){
-					case 0 :
-						//Do scale
-						break;
-					default :
-						CrossLine();
-						break;
-
-						}
-					break;
-				}
-				break;
-			case 2 :
-				//Cross line
+			default:
+				CrossLine();
 				break;
 			}
 		}
 		else if (autoSelected == autoIdle) {
-			cout << "Doing Nothing in Auton..." << endl;
+			cout << "Doing /Literally/ Nothing in Auton..." << endl;
 			gyro.Reset();
 
 		}
@@ -384,22 +418,27 @@ public:
 
 	void AutonomousPeriodic() {
 		g_Angle = gyro.GetAngle();
-		cout << g_Angle << endl;
-		Wait(0.3);
 	}
 
 	void TeleopInit() {
+
+		d_setLeft.SetInverted(false);
+		clawL.SetInverted(true);
 		RobotDrive.SetSafetyEnabled(true);
 		while (IsOperatorControl() && IsEnabled()) {
-
 			// Drive
-			RobotDrive.TankDrive(stickDriveL.GetY(), -stickDriveR.GetY());
+			RobotDrive.ArcadeDrive(-stickDrive.GetY(), stickDrive.GetZ());
+			SmartDashboard::PutNumber("Gyro Angle", gyro.GetAngle());
 
 			// Claw up/down
 			if (stickAux.GetRawButton(3)) {
-				clawY.Set(0.7);
+				clawY.Set(0.8);
 			} else if (stickAux.GetRawButton(4)) {
-				clawY.Set(-0.7);
+				clawY.Set(-0.8);
+			} else if (stickAux.GetRawButton(5)) {
+				clawY.Set(1);
+			} else if (stickAux.GetRawButton(6)) {
+				clawY.Set(-1);
 			} else {
 				clawY.Set(0);
 			}
@@ -410,12 +449,12 @@ public:
 				clawR.Set(-1);
 
 			} else if (stickAux.GetRawButton(1)) {
-				clawL.Set(-0.8);
-				clawR.Set(0.8);
+				clawL.Set(-0.65);
+				clawR.Set(0.65);
 
-			} else if (stickAux.GetY() > 0.2 || stickAux.GetY() < -0.2) {
-				clawL.Set(stickAux.GetY()*0.25);
-				clawR.Set(-stickAux.GetY()*0.25);
+			} else if (stickAux.GetY() > 0.2 || stickAux.GetY() < -0.2){
+				clawL.Set(stickAux.GetY()*0.5);
+				clawR.Set(-stickAux.GetY()*0.5);
 
 			} else if (stickAux.GetZ() > 0.2 || stickAux.GetZ() < -0.2){
 				clawL.Set(stickAux.GetZ()*0.25);
@@ -431,6 +470,8 @@ public:
 				mClimb.Set(0.8);
 			} else if (stickAux.GetRawButton(12)) {
 				mClimb.Set(-0.8);
+			} else if (stickAux.GetRawButton(10)) {
+				mClimb.Set(0.5);
 			} else {
 				mClimb.Set(0);
 			}
@@ -471,9 +512,8 @@ private:
 	Spark mClimb{7};
 
 	//Joysticks
-	Joystick stickDriveL{0};
-	Joystick stickDriveR{1};
-	Joystick stickAux{2};
+	Joystick stickDrive{0};
+	Joystick stickAux{1};
 
 	//Gyro
 	ADXRS450_Gyro gyro{SPI::Port::kOnboardCS0};
